@@ -49,9 +49,10 @@ test_random_data(long length, std::function<void(std::istream &input, std::ostre
 
 
 
-//TEST(random_test_100000, bzip2) {
+TEST(random_test_100000, bzip2) {
+    EXPECT_STREQ("dsf","dsf");
 //    EXPECT_TRUE(test_random_data(100000, bzip2::encode, bzip2::decode));
-//}
+}
 
 int main(int argc, char *argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
