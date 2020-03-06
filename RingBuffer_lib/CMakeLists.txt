@@ -1,9 +1,9 @@
 project(RingBuffer)
 
 set(HEADER_FILES
-        headers/RingBuffer.hpp headers/RingBuffer_range_error.hpp)
+        headers/RingBuffer.hpp headers/RingBufferError.hpp)
 
 set(SOURCE_FILES
-        sources/RingBuffer.cpp sources/RingBuffer_range_error.cpp)
+        sources/RingBuffer.cpp sources/RingBufferError.cpp)
 
 add_library(RingBuffer_lib STATIC ${SOURCE_FILES} ${HEADER_FILES})

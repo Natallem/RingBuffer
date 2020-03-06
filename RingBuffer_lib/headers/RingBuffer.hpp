@@ -4,7 +4,6 @@
 #include <vector>
 #include <mutex>
 
-
 class RingBuffer {
 
 public:
@@ -14,11 +13,11 @@ public:
 
 /** @brief Add one byte or throw error.
    *
-   * Add one byte if buffer has free space else throw RingBuffer_range_error.
+   * Add one byte if buffer has free space else throw RingBufferError.
    */
     void addByte(char ch);
 
-/** @brief Add all bytes of throw error.
+/** @brief Add all bytes or throw error.
    */
     void addAllBytes(const std::vector<char> &bytes);
 
@@ -35,12 +34,12 @@ public:
     */
     std::vector<char> readAllBytes(size_t amount);
 
-/** @brief Try to read amount of bytes. If buffer has less or equal then amount, return it, else return all bytes in buffer.
+/** @brief Try to read 'amount' of bytes. If buffer has less or equal then amount, return this number, else return all bytes in buffer.
     *
     */
     std::vector<char> readSomeBytes(size_t amount);
 
-    size_t getFullness();
+    size_t getCapacity();
 
     bool isFull();
 
@@ -50,13 +49,15 @@ public:
 
     std::string show();
 
+    void resize(size_t);
+
 private:
     using LockGuard = std::lock_guard<std::recursive_mutex>;
     std::recursive_mutex lock;
     std::vector<char> buffer;
     size_t writeIndex;
     size_t readIndex;
-    size_t fullness;
+    size_t capacity;
 
     bool isPossibleTo(bool add, size_t numberOfBytes);
 
@@ -66,9 +67,11 @@ private:
 
     void checkIfPossibleTo(bool add, size_t numberOfBytes);
 
+    size_t incrIndex(size_t & index);
+
+    size_t prevIndex(size_t index);
+
     size_t freeSpace();
-
-
 };
 
 
