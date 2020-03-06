@@ -6,7 +6,6 @@
 #include "generator/random_generator.h"
 
 const static int MAX_BYTE = 8;
-using std::cout;
 
 std::vector<char> getRandomVectorChar(size_t length) {
     random_generator generator = random_generator();
@@ -144,23 +143,6 @@ testReadWriteByte(size_t bufferSize, size_t threadsAmount, size_t amountOfOperat
                                                 amountOfOperationInThread, std::ref(reader));
     std::future<size_t> futureAdd = std::async(threadingAddByte, std::ref(buffer), threadsAmount,
                                                amountOfOperationInThread, std::ref(writer));
-//    cout << "created future\n";
-    auto added = futureAdd.get();
-    auto read = futureRead.get();
-    if (added == read) {
-        return ::testing::AssertionSuccess() << "Sums are the same";
-    } else {
-        return ::testing::AssertionFailure() << "Sums are different: added=" << added << " read= " << read;
-    }
-}
-
-::testing::AssertionResult
-testReadWriteMBytes(size_t bufferSize, size_t threadsAmount, size_t amountOfOperationInThread) {
-    RingBuffer buffer(bufferSize);
-    std::future<size_t> futureRead = std::async(threadingReadByte, std::ref(buffer), threadsAmount,
-                                                amountOfOperationInThread, readMBytes);
-    std::future<size_t> futureAdd = std::async(threadingAddByte, std::ref(buffer), threadsAmount,
-                                               amountOfOperationInThread, addMBytes);
     auto added = futureAdd.get();
     auto read = futureRead.get();
     if (added == read) {
@@ -301,7 +283,6 @@ TEST(check_buffer_methods, addReadSomeBytes) {
     }
 }
 
-
 TEST(check_buffer_methods, resize) {
     for (int i = 1; i < 500; i++) {
         RingBuffer buffer(i);
@@ -355,7 +336,6 @@ TEST(zero_buffer, all_methods) {
     EXPECT_NO_THROW(buffer.addAllBytes(std::vector<char>(iter, vec.end())));
     EXPECT_EQ(buffer.readAllBytes(newSize), vec);
 }
-
 
 TEST(check_sequance, addReadOneByte) {
     for (int i = 1; i < 500; i += 5) {

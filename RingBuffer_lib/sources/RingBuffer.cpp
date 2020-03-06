@@ -1,11 +1,9 @@
-#include <iostream>
 #include "headers/RingBuffer.hpp"
 #include "headers/RingBufferError.hpp"
 
 
 RingBuffer::RingBuffer(size_t bufferSize) : buffer(std::vector<char>(bufferSize)), readIndex(0), writeIndex(0),
                                             capacity(0) {
-//    std::cout << "RingBuffer created";
 }
 
 void RingBuffer::addByte(char ch) {
@@ -15,7 +13,6 @@ void RingBuffer::addByte(char ch) {
 }
 
 void RingBuffer::checkIfPossibleTo(bool add, size_t numberOfBytes) {//after lockGuard
-//    LockGuard locker(lock);
     if (!isPossibleTo(add, numberOfBytes)) {
         std::string action = (add) ? "add" : "read";
         std::string lack = (add) ? "free space" : "elements";
@@ -33,7 +30,6 @@ void RingBuffer::addAllBytes(const std::vector<char> &bytes) {
 }
 
 bool RingBuffer::isPossibleTo(bool add, size_t numberOfBytes) {
-//    LockGuard locker(lock);
     if (add) return (capacity + numberOfBytes <= buffer.size());
     else return (capacity >= numberOfBytes && capacity >= 0);
 
@@ -43,7 +39,6 @@ void RingBuffer::addByteWithoutCheck(char ch) {
     buffer[incrIndex(writeIndex)] = ch;
     ++capacity;
 }
-
 
 size_t RingBuffer::addSomeBytes(const std::vector<char> &bytes) {
     LockGuard locker(lock);
@@ -112,24 +107,10 @@ bool RingBuffer::empty() {
     return capacity == 0;
 }
 
-std::string RingBuffer::show() {
-    LockGuard locker(lock);
-    std::string s;
-    for (auto t : buffer) {
-        s += std::to_string((int) t) + " ";
-    }
-    s += " capacity = " + std::to_string(capacity) + "\n";
-    return s;
-}
-
 void RingBuffer::resize(size_t newSize) {
     LockGuard locker(lock);
     if (newSize < capacity)
         throw RingBufferError("Cannot resize buffer. New Buffer length is less then RingBuffer capacity");
-//    if (newSize > buffer.size()) {
-//        buffer.resize(newSize);
-//        return;
-//    }
     std::vector<char> newBuffer(newSize);
     for (int i = 0; i < capacity; i++) {
         newBuffer[i] = buffer[incrIndex(readIndex)];
@@ -144,15 +125,6 @@ size_t RingBuffer::incrIndex(size_t &index) {
     index = (index + 1) % buffer.size();
     return index_;
 }
-
-size_t RingBuffer::prevIndex(size_t index) {
-    return (index == 0) ? buffer.size() - 1 : --index;
-}
-
-//std::string RingBuffer::show() {
-//
-//    return std::__cxx11::string();
-//}
 
 
 
