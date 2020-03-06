@@ -3,16 +3,16 @@
 #include <headers/RingBuffer.hpp>
 #include <headers/RingBufferError.hpp>
 #include "gtest/gtest.h"
-#include "generator/random_generator.h"
+#include "generator/randomGenerator.h"
 
 const static int MAX_BYTE = 8;
 
 std::vector<char> getRandomVectorChar(size_t length) {
-    random_generator generator = random_generator();
+    randomGenerator generator = randomGenerator();
 
     std::vector<char> vector;
     for (int i = 0; i < length; i++) {
-        vector.push_back(generator.get_byte());
+        vector.push_back(generator.getByte());
     };
     return vector;
 }
@@ -32,10 +32,10 @@ size_t readByteNTimes(RingBuffer &buffer, size_t N) {
 }
 
 size_t addByteNTimes(RingBuffer &buffer, size_t N) {
-    random_generator generator = random_generator();
+    randomGenerator generator = randomGenerator();
     size_t sum = 0;
     for (int i = 0; i < N; i++) {
-        char number = generator.get_int_in_range(0, MAX_BYTE - 1);
+        char number = generator.getIntInRange(0, MAX_BYTE - 1);
         bool catchError = true;
         while (catchError) {
             catchError = false;
@@ -50,20 +50,26 @@ size_t addByteNTimes(RingBuffer &buffer, size_t N) {
     return sum;
 }
 
+/**
+ * add to buffer blocks of elements by addAllBytes method
+ * @param buffer
+ * @param M sum number of all added elements
+ * @return sum of all added elements
+ */
 size_t addMBytes(RingBuffer &buffer, size_t M) {
-    random_generator generator = random_generator();
+    randomGenerator generator = randomGenerator();
     size_t buffer_size = buffer.size();
     size_t sum = 0;
     while (M > 0) {
         int counter = 0;
-        std::vector<char> toAdd = getRandomVectorChar(generator.get_int_in_range(1, std::min(M, buffer_size)));
+        std::vector<char> toAdd = getRandomVectorChar(generator.getIntInRange(1, std::min(M, buffer_size)));
         while (true) {
             try {
                 buffer.addAllBytes(toAdd);
                 break;
             } catch (RingBufferError &ignored) {
                 if (counter++ > 20) {
-                    toAdd = getRandomVectorChar(generator.get_int_in_range(1, std::min(M, buffer_size)));
+                    toAdd = getRandomVectorChar(generator.getIntInRange(1, std::min(M, buffer_size)));
                 }
             }
         }
@@ -79,7 +85,7 @@ size_t addMBytes(RingBuffer &buffer, size_t M) {
 }
 
 size_t readMBytes(RingBuffer &buffer, size_t M) {
-    random_generator generator = random_generator();
+    randomGenerator generator = randomGenerator();
     size_t sum = 0;
     size_t buffer_size = buffer.size();
 
@@ -87,7 +93,7 @@ size_t readMBytes(RingBuffer &buffer, size_t M) {
         int toRead;
         std::vector<char> readVector;
         while (true) {
-            toRead = generator.get_int_in_range(1, std::min(M, buffer_size));
+            toRead = generator.getIntInRange(1, std::min(M, buffer_size));
             try {
                 readVector = buffer.readAllBytes(toRead);
                 break;
@@ -153,17 +159,17 @@ testReadWriteByte(size_t bufferSize, size_t threadsAmount, size_t amountOfOperat
 }
 
 RingBuffer &fullBuffer(RingBuffer &buffer) {
-    random_generator generator = random_generator();
+    randomGenerator generator = randomGenerator();
     while (!buffer.isFull()) {
-        buffer.addByte(generator.get_byte());
+        buffer.addByte(generator.getByte());
     }
     return buffer;
 }
 
 RingBuffer &halfFullBuffer(RingBuffer &buffer) {
-    random_generator generator = random_generator();
+    randomGenerator generator = randomGenerator();
     for (int i = buffer.getCapacity(); i < buffer.size() / 2; i++) {
-        buffer.addByte(generator.get_byte());
+        buffer.addByte(generator.getByte());
     }
     return buffer;
 }
@@ -195,7 +201,7 @@ TEST(full_buffer_add, add_some_elements) {
 }
 
 TEST(check_buffer_methods, getCapacity) {
-    random_generator generator = random_generator();
+    randomGenerator generator = randomGenerator();
     for (int i = 0; i < 60; i += 5) {
         RingBuffer buffer(i);
         EXPECT_EQ(buffer.getCapacity(), 0);
@@ -205,7 +211,7 @@ TEST(check_buffer_methods, getCapacity) {
         EXPECT_EQ(buffer.getCapacity(), i);
         emptyBuffer(buffer);
         if (i != 0) {
-            int full = generator.get_int_in_range(0, i - 1);
+            int full = generator.getIntInRange(0, i - 1);
             buffer.addAllBytes(getRandomVectorChar(full));
             EXPECT_EQ(buffer.getCapacity(), full);
         }
