@@ -21,7 +21,7 @@ add_library(RingBuffer_lib STATIC)
 #2. add source files for this target
 target_sources(	RingBuffer_lib PUBLIC
 		"sources/RingBuffer.cpp"
-		"sources/RingBufferError.cpp
+		"sources/RingBufferError.cpp"
                 )
 #3. pick directories to be included for the target
 target_include_directories( RingBuffer_lib PUBLIC
