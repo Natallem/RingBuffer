@@ -1,4 +1,4 @@
-#include "headers/RingBufferError.hpp"
+#include "RingBufferError.hpp"
 
 RingBufferError::RingBufferError(const std::string &message) : message(message) {}
 

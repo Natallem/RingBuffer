@@ -1,7 +1,7 @@
 #include <fstream>
 #include <future>
-#include <headers/RingBuffer.hpp>
-#include <headers/RingBufferError.hpp>
+#include <RingBuffer.hpp>
+#include <RingBufferError.hpp>
 #include "gtest/gtest.h"
 #include "generator/randomGenerator.h"
 

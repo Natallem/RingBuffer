@@ -1,7 +1,12 @@
-#include "headers/RingBuffer.hpp"
-#include "headers/RingBufferError.hpp"
+#include "RingBuffer.hpp"
+#include "RingBufferError.hpp"
 
 
+/**
+ * @brief RingBuffer::RingBuffer
+ * @param bufferSize
+ * @
+ */
 RingBuffer::RingBuffer(size_t bufferSize) : buffer(std::vector<char>(bufferSize)), readIndex(0), writeIndex(0),
                                             capacity(0) {
 }
