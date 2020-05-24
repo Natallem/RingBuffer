@@ -58,7 +58,7 @@ size_t addByteNTimes(RingBuffer &buffer, size_t N) {
  */
 size_t addMBytes(RingBuffer &buffer, size_t M) {
     randomGenerator generator = randomGenerator();
-    size_t buffer_size = buffer.size();
+    size_t buffer_size = buffer.getCapacity();
     size_t sum = 0;
     while (M > 0) {
         int counter = 0;
@@ -87,7 +87,7 @@ size_t addMBytes(RingBuffer &buffer, size_t M) {
 size_t readMBytes(RingBuffer &buffer, size_t M) {
     randomGenerator generator = randomGenerator();
     size_t sum = 0;
-    size_t buffer_size = buffer.size();
+    size_t buffer_size = buffer.getCapacity();
 
     while (M > 0) {
         int toRead;
@@ -111,12 +111,12 @@ size_t readMBytes(RingBuffer &buffer, size_t M) {
     return sum;
 }
 
-size_t threadingAddByte(RingBuffer &buffer, int threadNumber, int amountOfAddInThreads,
+size_t threadingAddByte(RingBuffer &buffer, int threadNumber, int numberOfAddInThreads,
                         const std::function<size_t(RingBuffer &, size_t)> &function) {
     std::vector<std::future<size_t>> futures;
     size_t sum = 0;
     for (int i = 0; i < threadNumber; ++i) {
-        futures.push_back(std::async(function, std::ref(buffer), amountOfAddInThreads));
+        futures.push_back(std::async(function, std::ref(buffer), numberOfAddInThreads));
     }
     for (int i = 0; i < threadNumber; ++i) {
         auto resultOfFunc = futures[i].get();
@@ -126,12 +126,12 @@ size_t threadingAddByte(RingBuffer &buffer, int threadNumber, int amountOfAddInT
 }
 
 
-size_t threadingReadByte(RingBuffer &buffer, int threadNumber, int amountOfAddInThreads,
+size_t threadingReadByte(RingBuffer &buffer, int threadNumber, int numberOfAddInThreads,
                          const std::function<size_t(RingBuffer &, size_t)> &function) {
     std::vector<std::future<size_t>> futures;
     size_t sum = 0;
     for (int i = 0; i < threadNumber; ++i) {
-        futures.push_back(std::async(/*readByteNTimes*/function, std::ref(buffer), amountOfAddInThreads));
+        futures.push_back(std::async(/*readByteNTimes*/function, std::ref(buffer), numberOfAddInThreads));
     }
     for (int i = 0; i < threadNumber; ++i) {
         auto resultOfFunc = futures[i].get();
@@ -141,14 +141,14 @@ size_t threadingReadByte(RingBuffer &buffer, int threadNumber, int amountOfAddIn
 }
 
 ::testing::AssertionResult
-testReadWriteByte(size_t bufferSize, size_t threadsAmount, size_t amountOfOperationInThread,
+testReadWriteByte(size_t bufferSize, size_t threadsAmount, size_t numberThreadOperations,
                   const std::function<size_t(RingBuffer &, size_t)> &reader,
                   const std::function<size_t(RingBuffer &, size_t)> &writer) {
     RingBuffer buffer(bufferSize);
     std::future<size_t> futureRead = std::async(threadingReadByte, std::ref(buffer), threadsAmount,
-                                                amountOfOperationInThread, std::ref(reader));
+                                                numberThreadOperations, std::ref(reader));
     std::future<size_t> futureAdd = std::async(threadingAddByte, std::ref(buffer), threadsAmount,
-                                               amountOfOperationInThread, std::ref(writer));
+                                               numberThreadOperations, std::ref(writer));
     auto added = futureAdd.get();
     auto read = futureRead.get();
     if (added == read) {
@@ -168,14 +168,14 @@ RingBuffer &fullBuffer(RingBuffer &buffer) {
 
 RingBuffer &halfFullBuffer(RingBuffer &buffer) {
     randomGenerator generator = randomGenerator();
-    for (int i = buffer.getCapacity(); i < buffer.size() / 2; i++) {
+    for (int i = buffer.getSize(); i < buffer.getCapacity() / 2; i++) {
         buffer.addByte(generator.getByte());
     }
     return buffer;
 }
 
 void emptyBuffer(RingBuffer &buffer) {
-    buffer.readSomeBytes(buffer.size());
+    buffer.readSomeBytes(buffer.getCapacity());
 }
 
 TEST(full_buffer_add, add_one_element) {
@@ -204,16 +204,16 @@ TEST(check_buffer_methods, getCapacity) {
     randomGenerator generator = randomGenerator();
     for (int i = 0; i < 60; i += 5) {
         RingBuffer buffer(i);
-        EXPECT_EQ(buffer.getCapacity(), 0);
+        EXPECT_EQ(buffer.getSize(), 0);
         halfFullBuffer(buffer);
-        EXPECT_EQ(buffer.getCapacity(), i / 2);
+        EXPECT_EQ(buffer.getSize(), i / 2);
         fullBuffer(buffer);
-        EXPECT_EQ(buffer.getCapacity(), i);
+        EXPECT_EQ(buffer.getSize(), i);
         emptyBuffer(buffer);
         if (i != 0) {
             int full = generator.getIntInRange(0, i - 1);
             buffer.addAllBytes(getRandomVectorChar(full));
-            EXPECT_EQ(buffer.getCapacity(), full);
+            EXPECT_EQ(buffer.getSize(), full);
         }
     }
 }
@@ -232,7 +232,7 @@ TEST(check_buffer_methods, isFull) {
 TEST(check_buffer_methods, size) {
     for (int i = 0; i < 60; i += 10) {
         RingBuffer buffer(i);
-        EXPECT_EQ(buffer.size(), i);
+        EXPECT_EQ(buffer.getCapacity(), i);
     }
 }
 
@@ -302,7 +302,7 @@ TEST(check_buffer_methods, resize) {
             vecInitial[i + j] = vecInitial[j];
         }
         EXPECT_EQ(vecInitial, verResult);
-        EXPECT_EQ(buffer.size(), i * 2);
+        EXPECT_EQ(buffer.getCapacity(), i * 2);
         EXPECT_TRUE(buffer.empty());
 
         auto iter = vecInitial.begin();
@@ -313,7 +313,7 @@ TEST(check_buffer_methods, resize) {
         buffer.readByte();
         EXPECT_NO_THROW(buffer.resize(i / 3));
         EXPECT_THROW(buffer.addByte(0), RingBufferError);
-        EXPECT_EQ(buffer.readAllBytes(buffer.getCapacity()), std::vector<char>(++vecInitial.begin(), iter));
+        EXPECT_EQ(buffer.readAllBytes(buffer.getSize()), std::vector<char>(++vecInitial.begin(), iter));
     }
 }
 
@@ -324,8 +324,8 @@ TEST(zero_buffer, all_methods) {
     EXPECT_THROW(buffer.readByte(), RingBufferError);
     EXPECT_NO_THROW(buffer.readSomeBytes(10));
     EXPECT_TRUE(buffer.readSomeBytes(10).empty());
-    EXPECT_EQ(buffer.size(), 0);
     EXPECT_EQ(buffer.getCapacity(), 0);
+    EXPECT_EQ(buffer.getSize(), 0);
     EXPECT_TRUE(buffer.isFull());
     EXPECT_TRUE(buffer.empty());
     size_t newSize = 4;
@@ -333,11 +333,11 @@ TEST(zero_buffer, all_methods) {
     auto iter = vec.begin();
     std::advance(iter, newSize / 2);
     buffer.resize(newSize);
-    buffer.resize(buffer.size() / 2);
+    buffer.resize(buffer.getCapacity() / 2);
     buffer.addAllBytes(std::vector<char>(vec.begin(), iter));
 
-    buffer.resize(buffer.size() * 2);
-    EXPECT_EQ(buffer.getCapacity(), newSize / 2);
+    buffer.resize(buffer.getCapacity() * 2);
+    EXPECT_EQ(buffer.getSize(), newSize / 2);
     EXPECT_THROW(buffer.addAllBytes(getRandomVectorChar(newSize/2 + 1)), RingBufferError);
     EXPECT_NO_THROW(buffer.addAllBytes(std::vector<char>(iter, vec.end())));
     EXPECT_EQ(buffer.readAllBytes(newSize), vec);
@@ -376,7 +376,7 @@ TEST(multitradingTest, addWriteOneByte) {
     for (int threads = 1; threads < 30; threads += 10) {
         for (int size = 1; size < 50; size += 15) {
             for (int add = 1; add < 30; add += 10) {
-                std::cout << "running size=" << size << " threads=" << threads << " add=" << add << std::endl;
+                std::cout << "running getCapacity=" << size << " threads=" << threads << " add=" << add << std::endl;
                 EXPECT_TRUE(testReadWriteByte(size, threads, add, readByteNTimes, addByteNTimes));
             }
         }
@@ -387,7 +387,7 @@ TEST(multitradingTest, addWriteMBytes) {
     for (int threads = 1; threads < 30; threads += 10) {
         for (int size = 1; size < 50; size += 15) {
             for (int add = 1; add < 30; add += 10) {
-                std::cout << "running size=" << size << " threads=" << threads << " add=" << add << std::endl;
+                std::cout << "running getCapacity=" << size << " threads=" << threads << " add=" << add << std::endl;
                 EXPECT_TRUE(testReadWriteByte(size, threads, add, readMBytes, addMBytes));
             }
         }
