@@ -1,14 +1,16 @@
 #include "headers/RingBuffer.hpp"
 #include "headers/RingBufferError.hpp"
 
+#define ADD true
+#define READ false
 
-RingBuffer::RingBuffer(size_t bufferSize) : buffer(std::vector<char>(bufferSize)), readIndex(0), writeIndex(0),
-                                            capacity(0) {
+RingBuffer::RingBuffer(size_t bufferCapacity) : buffer(std::vector<char>(bufferCapacity)), writeIndex(0), readIndex(0),
+                                                size(0) {
 }
 
 void RingBuffer::addByte(char ch) {
     LockGuard locker(lock);
-    checkIfPossibleTo(true, 1);
+    checkIfPossibleTo(ADD, 1);
     addByteWithoutCheck(ch);
 }
 
@@ -23,80 +25,80 @@ void RingBuffer::checkIfPossibleTo(bool add, size_t numberOfBytes) {//after lock
 
 void RingBuffer::addAllBytes(const std::vector<char> &bytes) {
     LockGuard locker(lock);
-    checkIfPossibleTo(true, bytes.size());
+    checkIfPossibleTo(ADD, bytes.size());
     for (char byte : bytes) {
         addByteWithoutCheck(byte);
     }
 }
 
 bool RingBuffer::isPossibleTo(bool add, size_t numberOfBytes) {
-    if (add) return (capacity + numberOfBytes <= buffer.size());
-    else return (capacity >= numberOfBytes && capacity >= 0);
-
+    if (add) return (size + numberOfBytes <= buffer.size());
+    return size >= numberOfBytes;
 }
 
 void RingBuffer::addByteWithoutCheck(char ch) {
     buffer[incrIndex(writeIndex)] = ch;
-    ++capacity;
+    ++size;
 }
 
 size_t RingBuffer::addSomeBytes(const std::vector<char> &bytes) {
     LockGuard locker(lock);
     size_t toAdd = bytes.size();
-    if (!isPossibleTo(true, toAdd)) {
+    if (!isPossibleTo(ADD, toAdd)) {
         toAdd = freeSpace();
     }
-    for (int i = 0; i < toAdd; i++) {
+    for (size_t i = 0; i < toAdd; i++) {
         addByteWithoutCheck(bytes[i]);
     }
     return toAdd;
 }
 
 size_t RingBuffer::freeSpace() {
-    return buffer.size() - capacity;
+    return buffer.size() - size;
 }
 
 char RingBuffer::readByte() {
     LockGuard locker(lock);
-    checkIfPossibleTo(false, 1);
+    checkIfPossibleTo(READ, 1);
     return readByteWithoutCheck();
 }
 
 char RingBuffer::readByteWithoutCheck() {
-    capacity--;
+    size--;
     return buffer[incrIndex(readIndex)];
 }
 
-std::vector<char> RingBuffer::readAllBytes(size_t amount) {
+std::vector<char> RingBuffer::readAllBytes(size_t number) {
     LockGuard locker(lock);
+    checkIfPossibleTo(READ, number);
+    return readBytesWithoutCheck(number);
+}
 
-    checkIfPossibleTo(false, amount);
-    std::vector<char> result(amount);
-    for (int i = 0; i < amount; i++) {
+std::vector<char> RingBuffer::readSomeBytes(size_t number) {
+    LockGuard locker(lock);
+    if (size < number) number = size;
+    return readBytesWithoutCheck(number);
+}
+
+std::vector<char> RingBuffer::readBytesWithoutCheck(size_t number) {
+    std::vector<char> result(number);
+    for (size_t i = 0; i < number; i++) {
         result[i] = readByteWithoutCheck();
     }
     return result;
 }
 
-std::vector<char> RingBuffer::readSomeBytes(size_t amount) {
+size_t RingBuffer::getSize() {
     LockGuard locker(lock);
-    if (!isPossibleTo(true, amount)) {
-        amount = capacity;
-    }
-    return readAllBytes(amount);
-}
-
-size_t RingBuffer::getCapacity() {
-    LockGuard locker(lock);
-    return capacity;
+    return size;
 }
 
 bool RingBuffer::isFull() {
     LockGuard locker(lock);
-    return capacity == buffer.size();
+    return size == buffer.size();
 }
 
-size_t RingBuffer::size() {
+size_t RingBuffer::getCapacity() {
     LockGuard locker(lock);
     return buffer.size();
 }
@@ -104,18 +106,18 @@ size_t RingBuffer::size() {
 bool RingBuffer::empty() {
     LockGuard locker(lock);
 
-    return capacity == 0;
+    return size == 0;
 }
 
 void RingBuffer::resize(size_t newSize) {
     LockGuard locker(lock);
-    if (newSize < capacity)
-        throw RingBufferError("Cannot resize buffer. New Buffer length is less then RingBuffer capacity");
+    if (newSize < size)
+        throw RingBufferError("Cannot resize buffer. New Buffer length is less then RingBuffer getCapacity");
     std::vector<char> newBuffer(newSize);
-    for (int i = 0; i < capacity; i++) {
+    for (size_t i = 0; i < size; i++) {
         newBuffer[i] = buffer[incrIndex(readIndex)];
     }
-    writeIndex = capacity;
+    writeIndex = size;
     readIndex = 0;
     buffer = newBuffer;
 }

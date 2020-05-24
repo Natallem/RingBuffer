@@ -8,7 +8,7 @@ class RingBuffer {
 
 public:
 
-    explicit RingBuffer(size_t bufferSize = 8);
+    explicit RingBuffer(size_t bufferCapacity = 8);
 
     virtual ~RingBuffer() = default;
 
@@ -40,37 +40,37 @@ public:
 /** @brief Read and return exactly 'amount' bytes if possible.
   *   @throws RingBufferException if buffer hasn't got less then 'amount' elements
     */
-    std::vector<char> readAllBytes(size_t amount);
+    std::vector<char> readAllBytes(size_t count);
 
-/** @brief Try to read 'amount' of bytes or less(if buffer has less elements then amount).
+/** @brief Try to read 'count' of bytes or less(if buffer has less elements then count).
     *
-    * If buffer has less then amount elements, return all elements in buffer, else return exactly 'amount' elements.
+    * If buffer has less then count elements, return all elements in buffer, else return exactly 'count' elements.
     */
-    std::vector<char> readSomeBytes(size_t amount);
+    std::vector<char> readSomeBytes(size_t count);
 
-    /** @brief Return current amount of elements in buffer
+    /** @brief Return current number of elements in buffer
     */
-    size_t getCapacity();
+    size_t getSize();
 
-    /** @brief Return true if buffer contains maximum amount of elements else return false
+    /** @brief Return true if buffer contains maximum number of elements else return false
    */
     bool isFull();
 
-    /** @brief Return current size of buffer
+    /** @brief Return current getCapacity of buffer
    */
-    size_t size();
+    size_t getCapacity();
 
     /** @brief Return true if buffer doesn't contain any element else return false;
     */
     bool empty();
     /**
-    * @brief Change size of buffer
+    * @brief Change getCapacity of buffer
     *
-    * @param[in] newSize size of buffer
+    * @param[in] newSize getCapacity of buffer
     * @throws RingBufferError
-    * if buffer contains more element then new size
+    * if buffer contains more element then new getCapacity
     *
-    * Change size of buffer saving order
+    * Change getCapacity of buffer saving order
     */
     void resize(size_t newSize);
 
@@ -80,7 +80,7 @@ private:
     std::vector<char> buffer;
     size_t writeIndex;
     size_t readIndex;
-    size_t capacity;
+    size_t size;
 
     bool isPossibleTo(bool add, size_t numberOfBytes);
 
@@ -89,6 +89,8 @@ private:
     char readByteWithoutCheck();
 
     void checkIfPossibleTo(bool add, size_t numberOfBytes);
+
+    std::vector<char> readBytesWithoutCheck(size_t number);
 
     size_t incrIndex(size_t &index);
 
