@@ -10,8 +10,8 @@
 		  #        sources/RingBuffer.cpp sources/RingBufferError.cpp)
 
 		  #add_library(RingBuffer_lib STATIC ${SOURCE_FILES} ${HEADER_FILES})
-		  # add_library arguments are ONLY source files, not headers
-		  # of course, iti si possible to pick headers as if they are sourses, but it's not our way )
+		  # add_library arguments are ONLY source files, not headers of course, iti si possible to pick headers as if they are
+		  # sourses, but it's not our way )
 
 		  # It would be better if we go this way:
 

@@ -1,28 +1,14 @@
 cmake_minimum_required(VERSION 3.4)
-
 project(RingBuffer)
 
-# add error proof code
-add_executable(RingBuffer_err_test)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
-target_sources(	RingBuffer_err_test PUBLIC
-		"main.cpp"
-			  )
+set(SOURCE_FILES main.cpp)
 
-set (RingBuffer_lib_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/RingBuffer_lib/headers")
+add_executable(RingBuffer_run ${SOURCE_FILES} RingBuffer_lib)
 
-#3. pick directories to be included for the target
-target_include_directories( RingBuffer_err_test PUBLIC
-						   "./"
-						   ${RingBuffer_lib_include_dir}
-						   )
+include_directories(RingBuffer_lib)
+add_subdirectory(RingBuffer_lib)
 
-target_compile_options(RingBuffer_err_test BEFORE PRIVATE "-std=c++17")
-
-find_library(LIB_RING_BUFFER RingBuffer_lib PATHS "${CMAKE_CURRENT_SOURCE_DIR}/RingBuffer_lib/build")
-
-message ("LIB_RING_BUFFER = " ${LIB_RING_BUFFER})
-
-target_link_libraries(RingBuffer_err_test ${LIB_RING_BUFFER})
-
-
+target_link_libraries(RingBuffer_run RingBuffer_lib)
+add_subdirectory(google_tests)
