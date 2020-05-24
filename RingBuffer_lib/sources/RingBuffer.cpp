@@ -1,9 +1,14 @@
-#include "headers/RingBuffer.hpp"
-#include "headers/RingBufferError.hpp"
+#include "RingBuffer.hpp"
+#include "RingBufferError.hpp"
 
 #define ADD true
 #define READ false
 
+/**
+ * @brief RingBuffer::RingBuffer
+ * @param bufferSize
+ * @
+ */
 RingBuffer::RingBuffer(size_t bufferCapacity) : buffer(std::vector<char>(bufferCapacity)), writeIndex(0), readIndex(0),
                                                 size(0) {
 }
